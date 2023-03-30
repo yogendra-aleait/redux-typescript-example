@@ -5,6 +5,7 @@ import {
     createAsyncThunk,
 } from "@reduxjs/toolkit";
 import axios from "axios";
+import { client } from '../../api/client';
 import { Post } from "./Post";
 import { RootState } from "../../app/store";
 
@@ -28,13 +29,19 @@ interface InitialPost {
     user: any;
 }
 
-export const fetchPosts: any = createAsyncThunk(
-    "posts/fetchPosts",
-    async () => {
-        const response = await axios.get(API_URL+"/posts");
-        return response.data;
-    }
-);
+// export const fetchPosts: any = createAsyncThunk(
+//     "posts/fetchPosts",
+//     async () => {
+//         const response = await axios.get(API_URL+"/posts");
+//         return response.data;
+//     }
+// );
+
+export const fetchPosts: any = createAsyncThunk('posts/fetchPosts', async () => {
+    const response = await client.get('/fakeApi/posts')
+    return response.data
+  })
+ 
 
 export const addNewPost = createAsyncThunk(
     "posts/addNewPost",
@@ -92,15 +99,15 @@ const postsSlice = createSlice({
     },
     extraReducers(builder) {
         builder
-            .addCase(fetchPosts.pending, (state, action) => {
+            .addCase(fetchPosts.pending, (state: any, action: any) => {
                 state.status = "loading";
             })
-            .addCase(fetchPosts.fulfilled, (state, action) => {
+            .addCase(fetchPosts.fulfilled, (state: any, action: any) => {
                 state.status = "succeeded";
                 // Add any fetched posts to the array
                 state.posts = state.posts.concat(action.payload);
             })
-            .addCase(fetchPosts.rejected, (state, action) => {
+            .addCase(fetchPosts.rejected, (state: any, action: any) => {
                 state.status = "failed";
                 state.error = action.error.message;
             })

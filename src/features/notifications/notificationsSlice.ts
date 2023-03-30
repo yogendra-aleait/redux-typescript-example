@@ -29,9 +29,14 @@ export const fetchNotifications = createAsyncThunk(
         const latestTimestamp = latestNotification
             ? latestNotification.date
             : "";
+
+        // const response = await client.get(
+        //     `${API_URL}/notifications?since=${latestTimestamp}`
+        // );
         const response = await client.get(
-            `${API_URL}/notifications?since=${latestTimestamp}`
-        );
+            `/fakeApi/notifications?since=${latestTimestamp}`
+        ); 
+            
         return response.data;
     }
 );
