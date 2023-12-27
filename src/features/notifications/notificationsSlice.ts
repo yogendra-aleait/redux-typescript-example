@@ -2,8 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { client } from "../../api/client";
 import { RootState } from "../../app/store";
 
-const API_URL = process.env.REACT_APP_API_URL;
-
 interface Notification {
     id: any;
     user: string;
@@ -30,9 +28,6 @@ export const fetchNotifications = createAsyncThunk(
             ? latestNotification.date
             : "";
 
-        // const response = await client.get(
-        //     `${API_URL}/notifications?since=${latestTimestamp}`
-        // );
         const response = await client.get(
             `/fakeApi/notifications?since=${latestTimestamp}`
         ); 

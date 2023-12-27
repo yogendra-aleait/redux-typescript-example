@@ -9,8 +9,6 @@ import { client } from '../../api/client';
 import { Post } from "./Post";
 import { RootState } from "../../app/store";
 
-const API_URL = process.env.REACT_APP_API_URL;
-
 interface InitialState {
     posts: Post[];
     status: "idle" | "loading" | "succeeded" | "failed";
@@ -29,13 +27,6 @@ interface InitialPost {
     user: any;
 }
 
-// export const fetchPosts: any = createAsyncThunk(
-//     "posts/fetchPosts",
-//     async () => {
-//         const response = await axios.get(API_URL+"/posts");
-//         return response.data;
-//     }
-// );
 
 export const fetchPosts: any = createAsyncThunk('posts/fetchPosts', async () => {
     const response = await client.get('/fakeApi/posts')
@@ -46,9 +37,9 @@ export const fetchPosts: any = createAsyncThunk('posts/fetchPosts', async () => 
 export const addNewPost = createAsyncThunk(
     "posts/addNewPost",
     // The payload creator receives the partial `{title, content, user}` object
-    async (initialPost: any) => {
+    async (initialPost: InitialPost) => {
         // We send the initial data to the fake API server
-        const response = await axios.post(API_URL + "/posts", initialPost);
+        const response = await axios.post("fakeApi/posts", initialPost);
         // The response includes the complete post object, including unique ID
         return response.data;
     }
