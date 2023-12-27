@@ -9,6 +9,9 @@ import './index.css';
 import {
   BrowserRouter as Router,
 } from "react-router-dom";
+import { worker } from './api/server';
+
+worker.start({ onUnhandledRequest: 'bypass' });
 
 const container = document.getElementById('root')!;
 const root = createRoot(container);

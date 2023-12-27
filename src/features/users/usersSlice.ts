@@ -3,17 +3,13 @@ import { client } from "../../api/client";
 import { User } from './User';
 import { RootState } from "../../app/store";
 
-const API_URL = process.env.REACT_APP_API_URL;
-
-const usersAdapter = createEntityAdapter<User>()
-
-const initialState = usersAdapter.getInitialState()
-
+const initialState: User [] = [];
 
 export const fetchUsers = createAsyncThunk("users/fetchUsers", async () => {
-    const response = await client.get(API_URL + "/users");
+    const response = await client.get("fakeApi/users");
     return response.data;
 });
+
 
 const usersSlice = createSlice({
     name: "users",

@@ -6,8 +6,6 @@ import {
 import { client } from "../../api/client";
 import { RootState } from "../../app/store";
 
-const API_URL = process.env.REACT_APP_API_URL;
-
 interface Notification {
     id: any;
     read: boolean;
@@ -39,9 +37,11 @@ export const fetchNotifications = createAsyncThunk(
         const latestTimestamp = latestNotification
             ? latestNotification.date
             : "";
+
         const response = await client.get(
-            `${API_URL}/notifications?since=${latestTimestamp}`
-        );
+            `/fakeApi/notifications?since=${latestTimestamp}`
+        ); 
+            
         return response.data;
     }
 );

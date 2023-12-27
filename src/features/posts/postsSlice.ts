@@ -7,36 +7,36 @@ import {
     createEntityAdapter,
 } from "@reduxjs/toolkit";
 import axios from "axios";
+import { client } from '../../api/client';
 import { Post } from "./Post";
 import { RootState } from "../../app/store";
 import { Draft } from "immer";
 import produce from 'immer';
 
-const API_URL = process.env.REACT_APP_API_URL;
-
-const postsAdapter = createEntityAdapter<Post>({
-    sortComparer: (a, b) => b.date.localeCompare(a.date),
-});
+interface InitialState {
+    posts: Post[];
+    status: "idle" | "loading" | "succeeded" | "failed";
+    error: string | null;
+}
 
 const initialState = postsAdapter.getInitialState({
     status: "idle",
     error: null,
 });
 
-export const fetchPosts: any = createAsyncThunk(
-    "posts/fetchPosts",
-    async () => {
-        const response = await axios.get(API_URL + "/posts");
-        return response.data;
-    }
-);
+
+export const fetchPosts: any = createAsyncThunk('posts/fetchPosts', async () => {
+    const response = await client.get('/fakeApi/posts')
+    return response.data
+  })
+ 
 
 export const addNewPost = createAsyncThunk(
     "posts/addNewPost",
     // The payload creator receives the partial `{title, content, user}` object
-    async (initialPost: any) => {
+    async (initialPost: InitialPost) => {
         // We send the initial data to the fake API server
-        const response = await axios.post(API_URL + "/posts", initialPost);
+        const response = await axios.post("fakeApi/posts", initialPost);
         // The response includes the complete post object, including unique ID
         return response.data;
     }
@@ -90,16 +90,16 @@ const postsSlice = createSlice({
     },
     extraReducers(builder) {
         builder
-            .addCase(fetchPosts.pending, (state, action) => {
+            .addCase(fetchPosts.pending, (state: any, action: any) => {
                 state.status = "loading";
             })
-            .addCase(fetchPosts.fulfilled, (state, action) => {
+            .addCase(fetchPosts.fulfilled, (state: any, action: any) => {
                 state.status = "succeeded";
                 // Add any fetched posts to the array
                 // Use the `upsertMany` reducer as a mutating update utility
                 postsAdapter.upsertMany(state, action.payload);
             })
-            .addCase(fetchPosts.rejected, (state, action) => {
+            .addCase(fetchPosts.rejected, (state: any, action: any) => {
                 state.status = "failed";
                 state.error = action.error.message;
             })
