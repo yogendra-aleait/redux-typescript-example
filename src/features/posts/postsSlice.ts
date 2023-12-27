@@ -3,11 +3,15 @@ import {
     nanoid,
     PayloadAction,
     createAsyncThunk,
+    createSelector,
+    createEntityAdapter,
 } from "@reduxjs/toolkit";
 import axios from "axios";
 import { client } from '../../api/client';
 import { Post } from "./Post";
 import { RootState } from "../../app/store";
+import { Draft } from "immer";
+import produce from 'immer';
 
 interface InitialState {
     posts: Post[];
@@ -15,17 +19,10 @@ interface InitialState {
     error: string | null;
 }
 
-const initialState: InitialState = {
-    posts: [],
+const initialState = postsAdapter.getInitialState({
     status: "idle",
     error: null,
-};
-
-interface InitialPost {
-    title: string;
-    content: string;
-    user: any;
-}
+});
 
 
 export const fetchPosts: any = createAsyncThunk('posts/fetchPosts', async () => {
@@ -47,19 +44,22 @@ export const addNewPost = createAsyncThunk(
 
 const postsSlice = createSlice({
     name: "posts",
-    initialState,
+    initialState: initialState,
     reducers: {
         reactionAdded(state, action) {
             const { postId, reaction } = action.payload;
-            const existingPost = state.posts.find((post) => post.id === postId);
+
+            const existingPost = state.entities[postId];
             if (existingPost) {
                 existingPost.reactions[reaction]++;
             }
         },
         postAdded: {
             reducer(state, action: PayloadAction<Post>) {
-                state.posts.push(action.payload);
-            },
+                return produce(state, (draftState: { posts: Post[] }) => {
+                  draftState.posts.push(action.payload);
+                });
+              },
             prepare(title, content, userId) {
                 return {
                     payload: {
@@ -81,7 +81,7 @@ const postsSlice = createSlice({
         },
         postUpdated(state, action) {
             const { id, title, content } = action.payload;
-            const existingPost = state.posts.find((post) => post.id === id);
+            const existingPost = state.entities[id];
             if (existingPost) {
                 existingPost.title = title;
                 existingPost.content = content;
@@ -96,23 +96,30 @@ const postsSlice = createSlice({
             .addCase(fetchPosts.fulfilled, (state: any, action: any) => {
                 state.status = "succeeded";
                 // Add any fetched posts to the array
-                state.posts = state.posts.concat(action.payload);
+                // Use the `upsertMany` reducer as a mutating update utility
+                postsAdapter.upsertMany(state, action.payload);
             })
             .addCase(fetchPosts.rejected, (state: any, action: any) => {
                 state.status = "failed";
                 state.error = action.error.message;
             })
-            .addCase(addNewPost.fulfilled, (state, action) => {
-                // We can directly add the new post object to our posts array
-                state.posts.push(action.payload);
-            });
+            // Use the `addOne` reducer for the fulfilled case
+            .addCase(addNewPost.fulfilled, postsAdapter.addOne);
     },
 });
 
 export const { postAdded, postUpdated, reactionAdded } = postsSlice.actions;
 export default postsSlice.reducer;
 
-export const selectAllPosts = (state: RootState) => state.posts.posts;
+// Export the customized selectors for this adapter using `getSelectors`
+export const {
+    selectAll: selectAllPosts,
+    selectById: selectPostById,
+    selectIds: selectPostIds
+    // Pass in a selector that returns the posts slice of state
+  } = postsAdapter.getSelectors((state: RootState) => state.posts)
 
-export const selectPostById = (state: RootState, postId: string) =>
-    state.posts.posts.find((post) => post.id === postId);
+export const selectPostsByUser = createSelector(
+    [selectAllPosts, (state, userId) => userId],
+    (posts, userId) => posts.filter((post) => post.user === userId)
+);

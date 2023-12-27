@@ -1,30 +1,60 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { useLayoutEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { selectAllUsers } from "../users/usersSlice";
-import { selectAllNotifications } from "./notificationsSlice";
+import {
+    selectAllNotifications,
+    allNotificationsRead,
+} from "./notificationsSlice";
+import classnames from "classnames";
+import { User } from "../users/User";
 
 export const NotificationsList = () => {
+    const dispatch = useDispatch();
     const notifications = useSelector(selectAllNotifications);
     const users = useSelector(selectAllUsers);
 
-    const renderedNotifications = notifications.map((notification) => {
-        const date = parseISO(notification.date);
-        const timeAgo = formatDistanceToNow(date);
-        const user = users.find((user) => user.id === notification.user) || {
+    useLayoutEffect(() => {
+        dispatch(allNotificationsRead());
+    });
+
+    const notificationIds = Object.keys(notifications.entities);
+
+    const renderedNotifications = notificationIds.map((notificationId) => {
+        const notification = notifications.entities[notificationId];
+        if (!notification) {
+            // handle case where notification is undefined
+            return null; // or any default value or appropriate handling
+        }
+
+        const date = notification?.date ? parseISO(notification.date) : null;
+        const timeAgo = date ? formatDistanceToNow(date) : null;
+
+        const defaultUser: User = {
+            id: null,
             name: "Unknown User",
         };
 
-        return (
-            <div key={notification.id} className="notification">
-                <div>
-                    <b>{user.name}</b> {notification.message}
-                </div>
-                <div title={notification.date}>
-                    <i>{timeAgo} ago</i>
-                </div>
-            </div>
+        const user = users.find(
+            (user): user is User => (user as User).id === notification.user
         );
+
+        const notificationClassname = classnames("notification", {
+            new: notification.isNew,
+        });
+
+        if (user) {
+            return (
+                <div key={notification.id} className={notificationClassname}>
+                    <div>
+                        <b>{user.name}</b> {notification.message}
+                    </div>
+                    <div title={notification.date}>
+                        <i>{timeAgo} ago</i>
+                    </div>
+                </div>
+            );
+        }
     });
 
     return (
